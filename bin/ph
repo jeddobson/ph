@@ -84,12 +84,15 @@ try:
   if verbose == 1:
     print("connecting to server: ",ldap_server)
 
+# error handling
 except ldap.LDAPError:
-  print(ldap.LDAPError)
+  print("ERROR: could not connect to server:",ldap_server)
+  exit()
   
 retrieveAttributes = None
 searchScope = ldap.SCOPE_SUBTREE
 
+# retrieve results
 try:
   ldap_result = l.search_s(baseDN, searchScope, searchFilter, retrieveAttributes)
 
@@ -100,7 +103,8 @@ try:
     if verbose == 1: 
       print("returned ", str(len(ldap_result))," matches")
     print_results(ldap_result)
-      
+
+# error handling
 except ldap.LDAPError:
-  print(e)
+  print("ERROR: could not retrieve data from server")
 

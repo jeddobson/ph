@@ -25,14 +25,13 @@ if sys.argv[1] == '-help':
   print("usage: ph [ -v ] 'First*Last Name'")
   sys.exit()
 
-# get argument
+# get argument and add to "cn" to make search filter
 searchFilter = "cn=" + sys.argv[1]
 
 if sys.argv[1] == '-v':
   verbose=1
   print("verbose mode: on")
   searchFilter = "cn=" + sys.argv[2]
-
 
 print("search string:", searchFilter)
 
@@ -54,6 +53,12 @@ def print_results(ldap_result):
       print("Nickname(s): N/A")
       
     print("Department: ",user['dcDeptclass'][0].decode())
+
+    if 'dcEmployeeDivision' in user.keys():
+        print("Division: ",user['dcEmployeeDivision'][0].decode())
+    else:
+        print("Division: N/A")
+
     print("Email: ",user['mail'][0].decode())
       
     if 'telephoneNumber' in user.keys():

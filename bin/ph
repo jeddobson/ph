@@ -47,8 +47,8 @@ def print_results(ldap_result):
     user = ldap_result[i][1].copy()
     print("Name: ", user['displayName'][0].decode())
     
-    if 'nickname' in user.keys():
-      print("Nickname(s): ", user['nickname'][0].decode())
+    if 'eduPersonNickname' in user.keys():
+      print("Nickname(s): ", user['eduPersonNickname'][0].decode())
     else:
       print("Nickname(s): N/A")
       

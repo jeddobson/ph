@@ -2,14 +2,19 @@
 """ph: Dartmouth Name Directory (DND) search tool
 """
 # James E. Dobson (James.E.Dobson@Dartmouth.EDU)
-# Originally written for Python 2.x in 2009 or so 
+# Originally written for Python 2.x in 2009 or so
 #
 
 # Dartmouth LDAP server
 ldap_server = "ldap://oud.dartmouth.edu"
 baseDN = "dc=dartmouth,dc=edu"
 
-verbose=0
+# LDAP search variables
+retrieveAttributes = None
+searchScope = ldap.SCOPE_SUBTREE
+
+# verbose flag
+verbose = False
 
 import ldap, ldap.modlist
 import sys
@@ -29,7 +34,7 @@ if sys.argv[1] == '-help':
 searchFilter = "cn=" + sys.argv[1]
 
 if sys.argv[1] == '-v':
-  verbose=1
+  verbose = True # flip to True
   print("verbose mode: on")
   searchFilter = "cn=" + sys.argv[2]
 
@@ -41,17 +46,17 @@ print("search string:", searchFilter)
 
 def print_results(ldap_result):
   i = 0
-  entries = len(ldap_result) 
+  entries = len(ldap_result)
   while i < entries:
     print("----------------------------------------")
     user = ldap_result[i][1].copy()
     print("Name: ", user['displayName'][0].decode())
-    
+
     if 'eduPersonNickname' in user.keys():
       print("Nickname(s): ", user['eduPersonNickname'][0].decode())
     else:
       print("Nickname(s): N/A")
-      
+
     print("Department: ",user['dcDeptclass'][0].decode())
 
     if 'dcEmployeeDivision' in user.keys():
@@ -60,12 +65,12 @@ def print_results(ldap_result):
         print("Division: N/A")
 
     print("Email: ",user['mail'][0].decode())
-      
+
     if 'telephoneNumber' in user.keys():
         print("Telephone: ", user['telephoneNumber'][0].decode())
     else:
         print("Telephone: N/A")
-        
+
     if 'eduPersonAffiliation' in user.keys():
       print("Type: ",user['eduPersonAffiliation'][0].decode())
     else:
@@ -83,19 +88,16 @@ def print_results(ldap_result):
 
 try:
   l = ldap.initialize(ldap_server)
-  #l = ldap.open(ldap_server)
   l.simple_bind_s()
 
-  if verbose == 1:
+  if verbose:
     print("connecting to server: ",ldap_server)
 
 # error handling
 except ldap.LDAPError:
   print("ERROR: could not connect to server:",ldap_server)
   exit()
-  
-retrieveAttributes = None
-searchScope = ldap.SCOPE_SUBTREE
+
 
 # retrieve results
 try:
@@ -105,11 +107,10 @@ try:
     print("No matching entries found.")
     sys.exit()
   else:
-    if verbose == 1: 
+    if verbose: 
       print("returned ", str(len(ldap_result))," matches")
     print_results(ldap_result)
 
 # error handling
 except ldap.LDAPError:
   print("ERROR: could not retrieve data from server")
-

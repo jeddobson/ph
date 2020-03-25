@@ -5,6 +5,9 @@
 # Originally written for Python 2.x in 2009 or so
 #
 
+import ldap, ldap.modlist
+import sys
+
 # Dartmouth LDAP server
 ldap_server = "ldap://oud.dartmouth.edu"
 baseDN = "dc=dartmouth,dc=edu"
@@ -16,8 +19,6 @@ searchScope = ldap.SCOPE_SUBTREE
 # verbose flag
 verbose = False
 
-import ldap, ldap.modlist
-import sys
 
 
 if len(sys.argv) < 2:

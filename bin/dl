@@ -1,0 +1,118 @@
+#!/usr/bin/env python
+"""dl: Dartmouth Name Directory (DND) search tool for departments
+"""
+# James E. Dobson (James.E.Dobson@Dartmouth.EDU)
+
+import ldap, ldap.modlist
+import argparse
+import sys
+
+# Dartmouth LDAP server
+ldap_server = "ldap://oud.dartmouth.edu"
+baseDN = "dc=dartmouth,dc=edu"
+
+# LDAP search variables
+retrieveAttributes = None
+searchScope = ldap.SCOPE_SUBTREE
+
+# verbose flag
+verbose = False
+
+parser = argparse.ArgumentParser(
+    description='Dartmouth Directory search (dl)')
+
+parser.add_argument('department',type=str,help="department name")
+parser.add_argument('-v','--verbose',help="verbose mode",dest='verbose',\
+   action='store_true',default=False)
+parser.add_argument('-e','--email',help="display only email addresses",\
+   dest="emailonly",action='store_true',default=False)
+parser.add_argument('-c','--category',help="select only a single employee category",\
+   dest='category',action='store',default="all")
+parser.add_argument('-a','--all_affiliations',help="display all affiliations",\
+   dest='all_affiliations',action='store_true',default=False)
+
+args = parser.parse_args()
+
+# get argument and add to "cn" to make search filter
+searchFilter = "dcEmployeeDepartment=" + args.department
+
+if args.verbose == True:
+  verbose = True # flip to True
+  print("verbose mode: on")
+  print("displaying category: {0}".format(args.category))
+
+print("search string:", searchFilter)
+
+#
+# function to print results
+#
+
+def print_results(ldap_result):
+  i = 0
+  entries = len(ldap_result)
+
+  # only print header if all data requested
+  if args.emailonly == False:
+     print("{0:30s} {1:19s} {2:8s} {3:30s}".format("Name","Status","NetID","Email"))
+
+  while i < entries:
+    user = ldap_result[i][1].copy()
+    name = user['displayName'][0].decode()
+    email= user['mail'][0].decode()
+    if 'uid' in user.keys():
+      uid = user['uid'][0].decode()
+    else:
+      uid = "N/A"
+
+    if args.all_affiliations == True:
+       EPA = "eduPersonAffiliation"
+    else:
+       EPA = "eduPersonPrimaryAffiliation"
+    if EPA in user.keys():
+      category = user[EPA][0].decode()
+    else:
+      category = "N/A"
+
+    if args.category != "all":
+       if category == args.category:
+          # address options
+          if args.emailonly:
+             print("{0:30s}".format(email))
+          else:
+             print("{0:30s} {1:19s} {2:8s} {3:30s}".format(name,category,uid,email))
+    else:
+          if args.emailonly:
+             print("{0:30s}".format(email))
+          else:
+             print("{0:30s} {1:19s} {2:8s} {3:30s}".format(name,category,uid,email))
+
+    i += 1
+
+try:
+  l = ldap.initialize(ldap_server)
+  l.simple_bind_s()
+
+  if verbose:
+    print("connecting to server: ",ldap_server)
+
+# error handling
+except ldap.LDAPError:
+  print("ERROR: could not connect to server:",ldap_server)
+  exit()
+
+
+# retrieve results
+try:
+  ldap_result = l.search_s(baseDN, searchScope, searchFilter, retrieveAttributes)
+
+  if len(ldap_result) == 0:
+    print("No matching entries found.")
+    sys.exit()
+  else:
+    if verbose: 
+      print("returned ", str(len(ldap_result))," matches")
+    print_results(ldap_result)
+
+# error handling
+except ldap.LDAPError:
+  print("ERROR: could not retrieve data from server")
